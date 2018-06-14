@@ -1,5 +1,4 @@
-# librdkafka is not available in a stable alpine release
-from alpine:edge as kafka-watcher-builder
+from golang:1.10.3-alpine3.7 as kafka-watcher-builder
 
 # To force a rebuild, pass --build-arg REBUILD="$(DATE)" when running
 # `docker build`
@@ -14,6 +13,15 @@ ENV PROJECT_DIR=$GOPATH/src/github.com/monasca/monasca-watchers
 RUN apk add --no-cache openssl-dev librdkafka-dev \
       git go glide g++
 
+# librdkafka is not available in a stable alpine release
+run apk add --update --no-cache \
+        libressl \
+    --repository http://nl.alpinelinux.org/alpine/edge/main  \
+    && apk add --update --no-cache \
+        librdkafka \
+        librdkafka-dev \
+    --repository http://nl.alpinelinux.org/alpine/edge/community
+
 WORKDIR $PROJECT_DIR
 RUN git init && \
     git remote add origin $WATCHER_REPO && \
@@ -23,9 +31,18 @@ RUN git init && \
 RUN glide install && \
     go build -o kafka-watcher -tags static main/kafka_watcher.go
 
-FROM alpine:3.6
+FROM alpine:3.7
 
-RUN apk add --no-cache openssl librdkafka-dev tini
+RUN apk add --no-cache openssl tini
+
+# librdkafka is not available in a stable alpine release
+run apk add --update --no-cache \
+        libressl \
+    --repository http://nl.alpinelinux.org/alpine/edge/main  \
+    && apk add --update --no-cache \
+        librdkafka \
+        librdkafka-dev \
+    --repository http://nl.alpinelinux.org/alpine/edge/community
 
 COPY --from=kafka-watcher-builder /go/src/github.com/monasca/monasca-watchers/kafka-watcher /kafka-watcher
 

@@ -1,4 +1,4 @@
-FROM alpine:3.6 as zookeeper-watcher-builder
+FROM golang:1.10.3-alpine3.7 as zookeeper-watcher-builder
 
 # To force a rebuild, pass --build-arg REBUILD="$(DATE)" when running
 # `docker build`
@@ -21,7 +21,7 @@ RUN git init && \
 RUN glide install && \
     go build -o zookeeper-watcher -tags static main/zookeeper_watcher.go
 
-FROM alpine:3.6
+FROM alpine:3.7
 
 RUN apk add --no-cache openssl tini
 
